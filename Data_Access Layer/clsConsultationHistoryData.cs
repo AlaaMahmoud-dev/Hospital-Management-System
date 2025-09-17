@@ -8,23 +8,68 @@ using System.Threading.Tasks;
 
 namespace HMS_DataAccess
 {
-    public class clsAppointmentData
+    public class clsConsultationHistoryData
     {
-
-
-        public static bool FindByAppointmentID(int AppointmentID, ref int ConsultationHistoryID,
-         ref byte Status, ref DateTime LastStatusDate, ref DateTime AppointmentDate, ref int CreatedByUserID)
+      
+        public static bool FindByConsultationHistoryID(int ConsultationHistoryID, ref int HistoryID, 
+        ref int DepartmentID, ref int DoctorID, ref DateTime CreatedAt, ref byte Status, ref DateTime LastStatusDate, ref int CreatedByUserID)
         {
             bool isFound = false;
 
             SqlConnection connection = new SqlConnection(clsDataAccessSettings.ConnectionString);
 
-            string query = $"select * from Appointments where AppointmentID = @AppointmentID";
+            string query = $"select * from ConsultationHistories where ConsultationHistoryID = @ConsultationHistoryID";
 
 
             SqlCommand command = new SqlCommand(query, connection);
 
-            command.Parameters.AddWithValue("AppointmentID", AppointmentID);
+            command.Parameters.AddWithValue("ConsultationHistoryID", ConsultationHistoryID);
+
+
+            try
+            {
+                connection.Open();
+
+                SqlDataReader reader = command.ExecuteReader();
+                if (reader.Read())
+                {
+                    HistoryID = (int)reader["HistoryID"];
+                    DoctorID = (int)reader["DoctorID"];
+                    DepartmentID = (int)reader["DepartmentID"];
+
+                    CreatedAt = (DateTime)reader["CreatedAt"];
+
+                    Status = (byte)reader["Status"];
+
+                    LastStatusDate = (DateTime)reader["LastStatusDate"];
+                    CreatedByUserID = (int)reader["CreatedByUserID"];
+
+                    isFound = true;
+
+                }
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+                isFound = false;
+            }
+            finally { connection.Close(); }
+            return isFound;
+
+        }
+        public static bool FindByHistoryID(ref int ConsultationHistoryID, int HistoryID, 
+        ref int DepartmentID, ref int DoctorID, ref DateTime CreatedAt, ref byte Status, ref DateTime LastStatusDate, ref int CreatedByUserID)
+        {
+            bool isFound = false;
+
+            SqlConnection connection = new SqlConnection(clsDataAccessSettings.ConnectionString);
+
+            string query = $"select * from ConsultationHistories where HistoryID = @HistoryID";
+
+
+            SqlCommand command = new SqlCommand(query, connection);
+
+            command.Parameters.AddWithValue("HistoryID", HistoryID);
 
 
             try
@@ -35,55 +80,14 @@ namespace HMS_DataAccess
                 if (reader.Read())
                 {
                     ConsultationHistoryID = (int)reader["ConsultationHistoryID"];
-                   
-                    Status = (byte)reader["Status"];
+                    DoctorID = (int)reader["DoctorID"];
+                    DepartmentID = (int)reader["DepartmentID"];
 
-                    LastStatusDate = (DateTime)reader["LastStatusDate"];
-                    AppointmentDate = (DateTime)reader["AppointmentDate"];
-                    CreatedByUserID = (int)reader["CreatedByUserID"];
-
-                    isFound = true;
-
-                }
-                reader.Close();
-            }
-            catch (Exception ex)
-            {
-                isFound = false;
-            }
-            finally { connection.Close(); }
-            return isFound;
-
-        }
-        public static bool FindByConsultationHistoryID(ref int AppointmentID,  int ConsultationHistoryID,
-         ref byte Status, ref DateTime LastStatusDate, ref DateTime AppointmentDate, ref int CreatedByUserID)
-        {
-            bool isFound = false;
-
-            SqlConnection connection = new SqlConnection(clsDataAccessSettings.ConnectionString);
-
-            string query = $"select * from Appointments where ConsultationHistoryID = @ConsultationHistoryID";
-
-
-            SqlCommand command = new SqlCommand(query, connection);
-
-            command.Parameters.AddWithValue("ConsultationHistoryID", ConsultationHistoryID);
-
-
-            try
-            {
-                connection.Open();
-
-                SqlDataReader reader = command.ExecuteReader();
-                if (reader.Read())
-                {
-                    AppointmentID = (int)reader["AppointmentID"];
-                   
+                    CreatedAt = (DateTime)reader["CreatedAt"];
 
                     Status = (byte)reader["Status"];
 
                     LastStatusDate = (DateTime)reader["LastStatusDate"];
-                    AppointmentDate = (DateTime)reader["AppointmentDate"];
                     CreatedByUserID = (int)reader["CreatedByUserID"];
 
                     isFound = true;
@@ -101,29 +105,31 @@ namespace HMS_DataAccess
         }
 
 
-        public static int AddNewAppointment(int ConsultationHistoryID,
-         byte Status,  DateTime LastStatusDate,  DateTime AppointmentDate,  int CreatedByUserID)
+        public static int AddNewConsultationHistory(int HistoryID,
+        int DepartmentID, int DoctorID, DateTime CreatedAt,
+        byte Status, DateTime LastStatusDate, int CreatedByUserID)
         {
 
-            int AppointmentID = -1;
+            int MedicalStaffID = -1;
 
             SqlConnection connection = new SqlConnection(clsDataAccessSettings.ConnectionString);
 
 
-            string query = @"Insert into Appointments (ConsultationHistoryID,Status,LastStatusDate,AppointmentDate,CreatedByUserID)
-                           Values(@ConsultationHistoryID,@Status,@LastStatusDate,@AppointmentDate,@CreatedByUserID);
+            string query = @"Insert into ConsultationHistories (HistoryID,DepartmentID,DoctorID,CreatedAt,Status,LastStatusDate,CreatedByUserID)
+                           Values(@HistoryID,@DepartmentID,@DoctorID,@CreatedAt,@Status,@LastStatusDate,@CreatedByUserID);
                             select Scope_Identity();";
 
             SqlCommand command = new SqlCommand(query, connection);
 
-            command.Parameters.AddWithValue("ConsultationHistoryID", ConsultationHistoryID);
-            command.Parameters.AddWithValue("Status", Status);
+            command.Parameters.AddWithValue("HistoryID", HistoryID);
+            command.Parameters.AddWithValue("DepartmentID", DepartmentID);
+            command.Parameters.AddWithValue("DoctorID", DoctorID);
+            command.Parameters.AddWithValue("CreatedAt", CreatedAt);
             command.Parameters.AddWithValue("LastStatusDate", LastStatusDate);
-            command.Parameters.AddWithValue("AppointmentDate", AppointmentDate);
-           
+            command.Parameters.AddWithValue("Status", Status);
             command.Parameters.AddWithValue("CreatedByUserID", CreatedByUserID);
 
-
+        
 
 
             try
@@ -134,7 +140,7 @@ namespace HMS_DataAccess
 
                 if (result != null && int.TryParse(result.ToString(), out int insertedID))
                 {
-                    AppointmentID = insertedID;
+                    MedicalStaffID = insertedID;
                 }
 
             }
@@ -146,31 +152,37 @@ namespace HMS_DataAccess
             {
                 connection.Close();
             }
-            return AppointmentID;
+            return MedicalStaffID;
 
         }
 
-        public static bool UpdateAppointment(int AppointmentID,int ConsultationHistoryID, byte Status, DateTime LastStatusDate, DateTime AppointmentDate, int CreatedByUserID)
+        public static bool UpdateConsultationHistory(int ConsultationHistoryID, int HistoryID,
+         int DepartmentID, int DoctorID, DateTime CreatedAt,
+        byte Status, DateTime LastStatusDate, int CreatedByUserID)
         {
             int RowsAffected = 0;
             SqlConnection connection = new SqlConnection(clsDataAccessSettings.ConnectionString);
 
-            string query = @"Update Appointments
-                           set AppointmentID=@AppointmentID,
-                           ConsultationHistoryID=@ConsultationHistoryID,
-                           Status=@Status, 
+            string query = @"Update ConsultationHistories
+                           set ConsultationHistoryID=@ConsultationHistoryID,
+                           HistoryID=@HistoryID, 
+                           DepartmentID=@DepartmentID,
+                           DoctorID=@DoctorID,
+                           CreatedAt=@CreatedAt,
+                           Status=@Status,  
                            LastStatusDate=@LastStatusDate,
-                           AppointmentDate=@AppointmentDate,
                            CreatedByUserID=@CreatedByUserID                         
                            where ConsultationHistoryID=@ConsultationHistoryID";
 
             SqlCommand command = new SqlCommand(query, connection);
 
-            command.Parameters.AddWithValue("AppointmentID", AppointmentID);
             command.Parameters.AddWithValue("ConsultationHistoryID", ConsultationHistoryID);
-            command.Parameters.AddWithValue("Status", Status);
+            command.Parameters.AddWithValue("HistoryID", HistoryID);
+            command.Parameters.AddWithValue("DepartmentID", DepartmentID);
+            command.Parameters.AddWithValue("DoctorID", DoctorID);
+            command.Parameters.AddWithValue("CreatedAt", CreatedAt);
             command.Parameters.AddWithValue("LastStatusDate", LastStatusDate);
-            command.Parameters.AddWithValue("AppointmentDate", AppointmentDate);
+            command.Parameters.AddWithValue("Status", Status);
             command.Parameters.AddWithValue("CreatedByUserID", CreatedByUserID);
 
 
@@ -195,17 +207,17 @@ namespace HMS_DataAccess
         }
 
 
-        public static bool DeleteAppointment(int AppointmentID)
+        public static bool DeleteConsultationHistory(int ConsultationHistoryID)
         {
             int RowsAffected = 0;
 
             SqlConnection connection = new SqlConnection(clsDataAccessSettings.ConnectionString);
 
-            string query = "delete from Appointments where AppointmentID=@ID";
+            string query = "delete from ConsultationHistories where ConsultationHistoryID=@ID";
 
             SqlCommand cmd = new SqlCommand(query, connection);
 
-            cmd.Parameters.AddWithValue("ID", AppointmentID);
+            cmd.Parameters.AddWithValue("ID", ConsultationHistoryID);
 
             try
             {
@@ -229,7 +241,7 @@ namespace HMS_DataAccess
 
         }
 
-        public static DataTable GetAllAppointments()
+        public static DataTable GetConsultationHistoriesList()
         {
 
             DataTable dtConsultationHistoriesList = new DataTable();
@@ -278,4 +290,3 @@ namespace HMS_DataAccess
 
     }
 }
-
